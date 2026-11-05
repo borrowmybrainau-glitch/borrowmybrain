@@ -459,7 +459,7 @@ const Legal = (() => {
 /* Module 3: enquiry form */
 const Enquiry = (() => {
   // Paste your Google Apps Script Web app URL here (ends in /exec). Leave empty for demo mode.
-  const FORM_ENDPOINT = '';
+  const FORM_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyqbxjRoV4_LsQZILkensfv_EqbYm8OZgyK9sQzkjJ_AN6WI7IGGlp0-hux0u9W5BSt/exec';
   const form = document.getElementById('enquiry'); if (!form) return;
   const status = form.querySelector('.status'), btn = form.querySelector('button[type=submit]');
   document.querySelectorAll('.portal[data-service]').forEach(c =>
