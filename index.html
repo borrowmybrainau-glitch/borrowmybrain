@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Borrow My Brain | The Spatial Idea Nexus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Urbanist:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#020B14; --indigo:#0A1128; --abyss:#061A2D;
+  --glass:rgba(10,25,47,.45); --glass-border:rgba(33,158,188,.15);
+  --teal:#219EBC; --amber:#FFB703; --text:#F8F9FA; --muted:#8D99AE;
+  --blur:20px;
+  --head:'Urbanist','Segoe UI',system-ui,sans-serif;
+  --body:'DM Sans','Segoe UI',system-ui,sans-serif;
+  box-sizing:border-box; color-scheme:dark;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--canvas);color:var(--text);font-family:var(--body);font-weight:400;line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* Background: animated mesh + grid */
+.mesh{position:fixed;inset:0;z-index:-2;overflow:hidden;background:var(--canvas)}
+.mesh i{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(90px)}
+.mesh i:nth-child(1){background:var(--indigo);top:-18%;left:-14%;animation:drift1 38s ease-in-out infinite alternate}
+.mesh i:nth-child(2){background:var(--abyss);right:-18%;top:12%;animation:drift2 46s ease-in-out infinite alternate}
+.mesh i:nth-child(3){background:rgba(33,158,188,.10);bottom:-26%;left:26%;animation:drift3 52s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(18vmax,12vmax) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-16vmax,10vmax) scale(.9)}}
+@keyframes drift3{to{transform:translate(-14vmax,-10vmax) scale(1.2)}}
+.grid{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(33,158,188,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(33,158,188,.07) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 45%,#000 15%,transparent 75%);
+  mask-image:radial-gradient(ellipse at 50% 45%,#000 15%,transparent 75%);
+  animation:gridmove 60s linear infinite}
+@keyframes gridmove{to{background-position:56px 56px}}
+
+/* Glass primitive */
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));border:1px solid var(--glass-border)}
+
+/* Interactive text */
+.hl{transition:color .2s ease}
+.hl:hover{color:var(--amber);font-weight:500}
+
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 6vw 14px;border-width:0 0 1px 0}
+.brand{font-family:var(--head);font-weight:700;font-size:1.25rem;letter-spacing:.02em}
+.brand b{color:var(--teal);font-weight:700}
+.nav ul{display:flex;gap:28px;list-style:none;margin:0;padding:0;font-size:.95rem;color:var(--muted)}
+
+/* Hero */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;padding:120px 6vw 80px;overflow:hidden}
+#nexus{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-copy{position:relative;z-index:2;max-width:580px}
+.eyebrow{font-weight:500;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin:0 0 18px}
+h1,h2,h3{font-family:var(--head);font-weight:700;margin:0}
+h1{font-size:clamp(2.5rem,5.6vw,4.6rem);line-height:1.05;letter-spacing:-.01em}
+.verb{color:var(--text);text-shadow:0 0 18px rgba(33,158,188,.9),0 0 44px rgba(33,158,188,.5)}
+.lead{color:var(--muted);font-size:1.1rem;max-width:480px;margin:22px 0 32px}
+.actions{display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-block;padding:13px 26px;border-radius:999px;font-weight:500;font-size:.98rem;transition:background .25s,color .25s,border-color .25s,box-shadow .25s}
+.btn.primary{background:var(--teal);color:var(--canvas);box-shadow:0 0 28px rgba(33,158,188,.35)}
+.btn.primary:hover{background:var(--amber);box-shadow:0 0 32px rgba(255,183,3,.4)}
+.btn.ghost{border:1px solid var(--glass-border);background:var(--glass);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur))}
+.btn.ghost:hover{color:var(--amber);border-color:rgba(255,183,3,.5)}
+.hint{margin-top:34px;font-size:.85rem;color:var(--muted)}
+.tip{position:absolute;z-index:5;pointer-events:none;padding:10px 14px;border-radius:12px;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;
+  background:var(--glass);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));border:1px solid rgba(255,183,3,.4);white-space:nowrap}
+.tip.on{opacity:1;transform:none}
+.tip b{display:block;font-family:var(--head);font-weight:600;font-size:.95rem;color:var(--amber)}
+.tip span{font-size:.8rem;color:var(--muted)}
+
+/* Portals */
+.portal-sec{position:relative;padding:60px 6vw 120px}
+.portal-sec h2{font-weight:600;font-size:clamp(1.8rem,3.4vw,2.6rem)}
+.portal-sec .sub{color:var(--muted);max-width:560px;margin:12px 0 56px}
+.portals{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;align-items:start}
+.slot{animation:bob 7s ease-in-out infinite}
+.slot:nth-child(2){animation-delay:-2.3s;margin-top:34px}
+.slot:nth-child(3){animation-delay:-4.6s}
+@keyframes bob{50%{translate:0 -10px}}
+.portal{--z:0px;--rx:0deg;--ry:0deg;--gx:50%;--gy:0%;position:relative;display:block;padding:30px 28px 28px;border-radius:22px;overflow:hidden;
+  background:var(--glass);-webkit-backdrop-filter:blur(var(--blur)) saturate(140%);backdrop-filter:blur(var(--blur)) saturate(140%);
+  border:1px solid var(--glass-border);box-shadow:0 24px 50px rgba(0,0,0,.35);
+  transform:perspective(1100px) translate3d(calc(var(--px,0)*var(--d,10)*-1px),calc(var(--py,0)*var(--d,10)*-1px),var(--z)) rotateX(var(--rx)) rotateY(var(--ry));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s,backdrop-filter .3s,-webkit-backdrop-filter .3s;will-change:transform}
+.portal::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(260px circle at var(--gx) var(--gy),rgba(255,183,3,.14),transparent 70%)}
+.portal:hover,.portal:focus-visible{--z:70px;outline:none;border-color:rgba(255,183,3,.6);
+  -webkit-backdrop-filter:blur(30px) saturate(150%);backdrop-filter:blur(30px) saturate(150%);
+  box-shadow:0 0 0 1px rgba(255,183,3,.25),0 0 44px rgba(33,158,188,.28),0 44px 80px rgba(0,0,0,.5)}
+.portal:hover::after,.portal:focus-visible::after{opacity:1}
+.orb{width:44px;height:44px;border-radius:50%;margin-bottom:22px;transition:background .3s,box-shadow .3s;
+  background:radial-gradient(circle at 35% 30%,#9ee6f7,var(--teal) 55%,#0b4a5c);box-shadow:0 0 26px rgba(33,158,188,.7)}
+.portal:hover .orb{background:radial-gradient(circle at 35% 30%,#ffe29a,var(--amber) 55%,#8a5a00);box-shadow:0 0 30px rgba(255,183,3,.7)}
+.tag{font-weight:500;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.portal h3{font-weight:600;font-size:1.65rem;margin:6px 0 4px}
+.svc{font-weight:500;color:var(--teal);font-size:.95rem;margin:0 0 14px}
+.portal p.d{color:var(--muted);font-size:.95rem;margin:0 0 18px}
+.meta{list-style:none;margin:0 0 20px;padding:0;font-size:.92rem;color:var(--muted)}
+.meta li::before{content:"→ ";color:var(--teal)}
+.price{font-family:var(--head);font-weight:700;font-size:1.35rem;margin:0 0 4px}
+.price small{display:block;font-family:var(--body);font-weight:400;font-size:.82rem;color:var(--muted)}
+.cta{display:inline-block;margin-top:16px;font-weight:500;font-size:.95rem}
+
+.contact{padding:20px 6vw 100px}
+.contact-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:40px;padding:40px;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
+.contact h2{font-weight:600;font-size:clamp(1.8rem,3.2vw,2.4rem)}
+.contact .sub{color:var(--muted);margin:12px 0 22px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fields .full{grid-column:1/-1}
+.contact label{display:block;font-weight:500;font-size:.85rem;margin-bottom:6px}
+.contact input,.contact select,.contact textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--glass-border);background:rgba(2,11,20,.55);color:var(--text);font:400 .95rem var(--body);transition:border-color .2s,box-shadow .2s}
+.contact textarea{min-height:110px;resize:vertical}
+.contact input:focus,.contact select:focus,.contact textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,183,3,.15)}
+.contact select option{background:#0A1128}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.85rem;color:var(--muted)}
+.contact .consent input{width:auto;margin-top:4px;accent-color:var(--teal)}
+.hp{position:absolute;left:-9999px;opacity:0}
+.contact button.btn{border:0;cursor:pointer;font-family:var(--body)}
+.contact button.btn:disabled{opacity:.6;cursor:wait}
+.status{min-height:1.4em;font-size:.9rem;margin:12px 0 0}.status.ok{color:var(--teal)}.status.warn{color:var(--amber)}
+@media (max-width:900px){.contact-wrap{grid-template-columns:1fr;padding:26px}.fields{grid-template-columns:1fr}}
+.legal{margin:0 6vw 16px;max-width:860px;padding:20px 28px;border-radius:18px}
+.legal summary{font-family:var(--head);font-weight:600;font-size:1.25rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;transition:color .2s}
+.legal summary::-webkit-details-marker{display:none}
+.legal summary::after{content:"+";color:var(--teal);font-size:1.5rem;transition:transform .25s}
+.legal[open] summary::after{transform:rotate(45deg)}
+.legal summary:hover{color:var(--amber)}
+.prose{margin-top:14px}
+.prose h3{font-family:var(--head);font-weight:600;font-size:1.05rem;margin:22px 0 6px}
+.prose p,.prose li{color:var(--muted);font-size:.95rem;line-height:1.7;margin:0 0 8px}
+.prose ul{padding-left:20px;margin:0}
+.prose .upd{font-size:.82rem}
+.consent a{color:var(--teal);text-decoration:underline}
+.legal-links a{color:var(--muted)}
+footer{padding:0 6vw calc(40px + env(safe-area-inset-bottom,0px));color:var(--muted);font-size:.84rem;max-width:760px}
+
+@media (max-width:900px){
+  .portals{grid-template-columns:1fr}.slot:nth-child(2){margin-top:0}
+  .nav ul{display:none}.hero{padding-top:110px}
+}
+@media (prefers-reduced-motion:reduce){
+  .mesh i,.grid,.slot{animation:none}
+  .portal,.tip{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="grid" aria-hidden="true"></div>
+
+<nav class="nav glass">
+  <a class="brand" href="#top">Borrow My <b>Brain</b></a>
+  <ul>
+    <li><a class="hl" href="#portals">Services</a></li>
+    <li><a class="hl" href="#contact">Enquire</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="top">
+  <canvas id="nexus" aria-hidden="true"></canvas>
+  <div class="tip" role="status" aria-live="polite"></div>
+  <div class="hero-copy">
+    <p class="eyebrow">The Spatial Idea Nexus</p>
+    <h1>Turn raw ideas into <span class="verb">validated</span> strategy.</h1>
+    <p class="lead">Research, roadmaps and market intelligence for students, businesses and stakeholders. Every idea becomes something you can see, test and build on.</p>
+    <div class="actions">
+      <a class="btn primary" href="#portals">Explore services</a>
+      <a class="btn ghost" href="#contact">Book a session</a>
+    </div>
+    <p class="hint">Move your cursor through the network to explore how ideas connect.</p>
+  </div>
+</header>
+
+<section class="portal-sec" id="portals">
+  <h2>Choose your <span class="verb">portal</span></h2>
+  <p class="sub">Three entry points, built around where you are right now.</p>
+  <div class="portals">
+
+    <div class="slot"><a class="portal" style="--d:10" data-service="roadmapping" href="#contact">
+      <div class="orb"></div>
+      <span class="tag">Service 01</span>
+      <h3>Student Incubator</h3>
+      <p class="svc">Academic Project Roadmapping</p>
+      <p class="d">A structured brainstorming session that turns a stuck study, assignment or capstone into a verified problem statement and a step-by-step project outline.</p>
+      <ul class="meta"><li class="hl">Verified problem statement</li><li class="hl">Step-by-step project outline</li><li class="hl">Coaching and structuring only</li></ul>
+      <p class="price hl">$100 <small>2-hour session</small></p>
+      <span class="cta hl">Book a session →</span>
+    </a></div>
+
+    <div class="slot"><a class="portal" style="--d:22" data-service="viability" href="#contact">
+      <div class="orb"></div>
+      <span class="tag">Service 03</span>
+      <h3>Business Strategy</h3>
+      <p class="svc">Business Viability &amp; Market Research</p>
+      <p class="d">Domain-specific feasibility studies built on data modelling and sales analytics, turning raw market data into a viability report and strategic roadmap.</p>
+      <ul class="meta"><li class="hl">Feasibility and viability report</li><li class="hl">Data modelling and sales analytics</li><li class="hl">Concrete strategic roadmap</li></ul>
+      <p class="price hl">Custom quote <small>Typically $2,500 to $3,000</small></p>
+      <span class="cta hl">Request a quote →</span>
+    </a></div>
+
+    <div class="slot"><a class="portal" style="--d:14" data-service="literature" href="#contact">
+      <div class="orb"></div>
+      <span class="tag">Service 02</span>
+      <h3>Stakeholder Vision</h3>
+      <p class="svc">Literature Review &amp; Background Research</p>
+      <p class="d">Core literature sourced and synthesised into an annotated bibliography or condensed research summary, ready to anchor your white paper.</p>
+      <ul class="meta"><li class="hl">Annotated bibliography</li><li class="hl">Condensed research summary</li><li class="hl">Scoped for the base tier</li></ul>
+      <p class="price hl">From $250 <small>Scope capped at base tier</small></p>
+      <span class="cta hl">Start a brief →</span>
+    </a></div>
+
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="contact-wrap glass">
+    <div>
+      <p class="eyebrow">Enquire</p>
+      <h2>Borrow my <span class="verb">brain</span></h2>
+      <p class="sub">Tell us where you’re stuck or what you need to decide. We’ll reply with next steps and, for larger projects, a discovery call.</p>
+      <ul class="meta"><li class="hl">Students: book a 2-hour roadmapping session</li><li class="hl">Professionals: scope a literature review</li><li class="hl">Businesses: request a viability quote</li></ul>
+    </div>
+    <form id="enquiry">
+      <div class="fields">
+        <div><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required></div>
+        <div><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+        <div><label for="f-org">Organisation or university</label><input id="f-org" name="organisation" autocomplete="organization"></div>
+        <div><label for="f-type">I am a</label>
+          <select id="f-type" name="audience" required><option value="">Select</option><option value="student">Student</option><option value="professional">Working professional</option><option value="business">Business</option></select></div>
+        <div><label for="f-service">Service</label>
+          <select id="f-service" name="service" required><option value="">Select</option><option value="roadmapping">Academic Project Roadmapping</option><option value="literature">Literature Review &amp; Background Research</option><option value="viability">Business Viability &amp; Market Research</option><option value="unsure">Not sure yet</option></select></div>
+        <div><label for="f-budget">Budget range (USD)</label>
+          <select id="f-budget" name="budget"><option value="">Select</option><option>Under $500</option><option>$500 to $2,500</option><option>$2,500 to $5,000</option><option>$5,000+</option><option>Not sure</option></select></div>
+        <div class="full"><label for="f-msg">What are you trying to solve?</label><textarea id="f-msg" name="message" required></textarea></div>
+        <div class="hp" aria-hidden="true"><label>Leave blank<input name="company_site" tabindex="-1" autocomplete="off"></label></div>
+        <label class="consent full"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted about this enquiry and can unsubscribe from any follow-up at any time. See our <a class="hl" href="#privacy">Privacy Policy</a> and <a class="hl" href="#terms">Terms</a>.</span></label>
+        <div class="full"><button class="btn primary" type="submit">Send enquiry</button><p class="status" role="status" aria-live="polite"></p></div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<details class="legal glass" id="privacy">
+  <summary>Privacy Policy</summary>
+  <div class="prose">
+    <p class="upd">Last updated 5 November 2026</p>
+    <h3>Who we are</h3>
+    <p>Borrow My Brain provides research, project roadmapping and market intelligence services from Mumbai, India, to clients including those in Australia. This policy explains how we handle personal information collected through this website. We handle it in line with the Australian Privacy Principles where they apply.</p>
+    <h3>What we collect</h3>
+    <p>When you submit the enquiry form we collect your name, email address, organisation or university, whether you are a student, professional or business, the service you are interested in, your budget range, your message and your consent. We also record the time of submission. This site does not use advertising or analytics cookies.</p>
+    <h3>Why we collect it</h3>
+    <ul>
+      <li>To respond to your enquiry, book sessions and prepare quotes.</li>
+      <li>To deliver the services you ask for.</li>
+      <li>To keep business and legal records.</li>
+      <li>To send follow-up messages, only where you have agreed. Every such message includes a way to unsubscribe.</li>
+    </ul>
+    <h3>Where it is stored and who sees it</h3>
+    <p>Enquiries are stored in a private Google Sheet and notified by email using Google services. Google may store data on servers outside Australia and India, so your information can be handled overseas. We do not sell your information. We share it only where needed to provide the service you requested, where you agree, or where the law requires. This site also loads fonts from Google Fonts, so Google receives your IP address when a page loads.</p>
+    <h3>Keeping it safe</h3>
+    <p>We limit access to enquiry data and rely on the security features of the services above. No online system is completely secure, so please do not put sensitive personal details in your message.</p>
+    <h3>How long we keep it</h3>
+    <p>We keep enquiry data for as long as it is needed for your enquiry, the services provided and our record-keeping obligations. After that we delete or de-identify it.</p>
+    <h3>Your rights</h3>
+    <p>You can ask to access, correct or delete the personal information we hold about you, or withdraw your consent to follow-up messages, by contacting us through the enquiry form on this page.</p>
+    <h3>Complaints</h3>
+    <p>Contact us first and we will try to resolve it. If you are not satisfied, you can complain to the Office of the Australian Information Commissioner (oaic.gov.au).</p>
+    <h3>Changes</h3>
+    <p>We may update this policy. The date at the top shows the latest version.</p>
+  </div>
+</details>
+
+<details class="legal glass" id="terms">
+  <summary>Terms of Service</summary>
+  <div class="prose">
+    <p class="upd">Last updated 5 November 2026</p>
+    <h3>1. About these terms</h3>
+    <p>By using this website or engaging Borrow My Brain you agree to these terms. If you do not agree, please do not use the site or our services.</p>
+    <h3>2. Our services</h3>
+    <p>We offer Academic Project Roadmapping, Literature Review &amp; Background Research, and Business Viability &amp; Market Research. The exact scope, deliverables and timeline are confirmed in writing before work starts. Business Viability work is quoted individually. Literature Review work at the base tier has a capped scope.</p>
+    <h3>3. Academic integrity</h3>
+    <p>Our student services are coaching, brainstorming, structuring and research support. We do not write, complete or sell assignments, theses or any work for submission as your own, and we will not help anyone breach their institution’s rules or Australian law on academic cheating services. You remain responsible for your own work and for following your institution’s policies.</p>
+    <h3>4. Pricing and payment</h3>
+    <p>Prices on this site are in USD and shown before any applicable taxes such as GST, unless a written quote says otherwise. Payment terms, deposits, rescheduling, cancellation and refunds are confirmed in writing when you book or accept a quote.</p>
+    <h3>5. Your responsibilities</h3>
+    <p>Please give us accurate information and only share materials you have the right to share.</p>
+    <h3>6. Intellectual property</h3>
+    <p>You keep ownership of the materials you give us. Once you have paid in full, you may use the deliverables for the purpose we agreed. We keep ownership of our general methods, models and know-how.</p>
+    <h3>7. Confidentiality</h3>
+    <p>We treat your enquiry and project information as confidential. We do not publicly name clients or projects without your consent.</p>
+    <h3>8. No guarantees</h3>
+    <p>Our research and viability work is based on the information available and professional judgement. It is not legal, financial or investment advice. We cannot guarantee outcomes such as grades, funding decisions or market results.</p>
+    <h3>9. Liability</h3>
+    <p>To the extent the law allows, our liability for any claim about a service is limited to the fees you paid for that service. Nothing in these terms excludes rights you have under the Australian Consumer Law or any other law that cannot be excluded.</p>
+    <h3>10. Governing law</h3>
+    <p>These terms are governed by the laws of India, without limiting any rights you have under Australian law that cannot be excluded.</p>
+    <h3>11. Changes</h3>
+    <p>We may update these terms. The date at the top shows the latest version. Questions can be sent through the enquiry form on this page.</p>
+  </div>
+</details>
+
+<footer>
+  <p class="legal-links"><a class="hl" href="#privacy">Privacy Policy</a> · <a class="hl" href="#terms">Terms of Service</a> · © 2026 Borrow My Brain</p>
+  <p>Prices shown in USD. Academic services are coaching and structuring support only; all submitted work remains the student’s own.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const pointer = {x:-9999, y:-9999, nx:0, ny:0};
+addEventListener('pointermove', e => {
+  pointer.x = e.clientX; pointer.y = e.clientY;
+  pointer.nx = e.clientX / innerWidth * 2 - 1;
+  pointer.ny = e.clientY / innerHeight * 2 - 1;
+}, {passive:true});
+
+/* Module 1: 3D node network */
+const Nexus = (() => {
+  const hero = document.querySelector('.hero'), canvas = document.getElementById('nexus'), tip = document.querySelector('.tip');
+  if (!window.THREE) { canvas.remove(); return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true}); }
+  catch (e) { canvas.remove(); return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(50, 1, .1, 100), group = new THREE.Group();
+  scene.add(group);
+  const TEAL = new THREE.Color(0x219EBC), AMBER = new THREE.Color(0xFFB703);
+
+  const glow = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), r = g.createRadialGradient(32,32,0,32,32,32);
+    r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.25,'rgba(255,255,255,.55)'); r.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle = r; g.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  })();
+
+  const LABELS = [
+    ['Problem Statement','Verified before you build'],['Literature Core','Sourced and synthesised'],
+    ['Market Signal','Raw data, structured'],['Viability Model','Feasibility under pressure'],
+    ['Project Roadmap','Step-by-step outline'],['Sales Analytics','Evidence for the decision'],
+    ['Capstone Brief','From stuck to scoped'],['White Paper','Research that stands up'],
+    ['Stakeholder Map','Who needs to say yes'],['Strategic Roadmap','Where to move next'],
+    ['Annotated Bibliography','Core sources, summarised'],['Customer Segment','Who actually buys']
+  ];
+
+  let seed = 11; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  const N = 64, nodes = [], coreGeo = new THREE.SphereGeometry(.07, 16, 16);
+  for (let i = 0; i < N; i++) {
+    const y = 1 - i / (N - 1) * 2, r = Math.sqrt(1 - y * y), th = i * 2.39996, rad = 2.2 + rnd() * 1.1;
+    const p = new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(rad);
+    const core = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({color:TEAL.clone()}));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({map:glow, color:TEAL.clone(), transparent:true, opacity:.5, blending:THREE.AdditiveBlending, depthWrite:false}));
+    core.position.copy(p); halo.position.copy(p); halo.scale.setScalar(.55);
+    group.add(core, halo);
+    nodes.push({id:i, p, core, halo, hot:0, edges:[], label:LABELS[i % LABELS.length], sx:0, sy:0});
+  }
+
+  const lp = [];
+  for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+    const a = nodes[i], b = nodes[j];
+    if (a.edges.length < 4 && b.edges.length < 4 && a.p.distanceTo(b.p) < 1.9) {
+      a.edges.push(j); b.edges.push(i); lp.push(a.p.x,a.p.y,a.p.z,b.p.x,b.p.y,b.p.z);
+    }
+  }
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+  const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({color:TEAL, transparent:true, opacity:.3}));
+  lines.frustumCulled = false; group.add(lines);
+
+  const hArr = new Float32Array(24), hGeo = new THREE.BufferGeometry();
+  hGeo.setAttribute('position', new THREE.BufferAttribute(hArr, 3)); hGeo.setDrawRange(0, 0);
+  const hLines = new THREE.LineSegments(hGeo, new THREE.LineBasicMaterial({color:AMBER, transparent:true, opacity:.85}));
+  hLines.frustumCulled = false; group.add(hLines);
+
+  let current = null;
+  function setHover(n) {
+    if (n === current) return;
+    current = n;
+    if (!n) { hGeo.setDrawRange(0, 0); tip.classList.remove('on'); return; }
+    let k = 0;
+    n.edges.forEach(j => { const q = nodes[j].p; hArr.set([n.p.x,n.p.y,n.p.z,q.x,q.y,q.z], k++ * 6); });
+    hGeo.attributes.position.needsUpdate = true; hGeo.setDrawRange(0, k * 2);
+    tip.innerHTML = '<b>' + n.label[0] + '</b><span>' + n.label[1] + '</span>';
+    tip.classList.add('on');
+  }
+
+  function resize() {
+    const w = hero.clientWidth, h = hero.clientHeight, wide = w > 900;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.position.z = wide ? 8.2 : 11;
+    group.position.set(wide ? 2.6 : 0, wide ? 0 : -1.4, 0);
+    camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  }
+  new ResizeObserver(resize).observe(hero); resize();
+
+  let visible = true;
+  new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(hero);
+
+  const clock = new THREE.Clock(), tmp = new THREE.Vector3();
+  let spin = 0, tx = 0, ty = 0;
+  (function frame() {
+    requestAnimationFrame(frame);
+    if (!visible || document.hidden) return;
+    const t = clock.getElapsedTime(), rect = hero.getBoundingClientRect();
+    const mx = pointer.x - rect.left, my = pointer.y - rect.top;
+    const inside = mx >= 0 && my >= 0 && mx <= rect.width && my <= rect.height;
+    if (!reduce) spin += .0014;
+    tx += ((inside ? pointer.ny : 0) * .35 - tx) * .04;
+    ty += ((inside ? pointer.nx : 0) * .55 - ty) * .04;
+    group.rotation.x = tx; group.rotation.y = spin + ty;
+    group.updateMatrixWorld(true);
+
+    let best = null, bd = 34;
+    for (const n of nodes) {
+      n.core.getWorldPosition(tmp); tmp.project(camera);
+      n.sx = (tmp.x * .5 + .5) * rect.width; n.sy = (-tmp.y * .5 + .5) * rect.height;
+      if (!inside) continue;
+      const d = Math.hypot(n.sx - mx, n.sy - my);
+      if (d < bd) { bd = d; best = n; }
+    }
+    setHover(best);
+    if (best) tip.style.transform = 'translate(' + (best.sx + 18) + 'px,' + (best.sy - 16) + 'px)', tip.style.left = '0', tip.style.top = '0';
+
+    for (const n of nodes) {
+      n.hot += ((n === best ? 1 : 0) - n.hot) * .12;
+      n.core.material.color.lerpColors(TEAL, AMBER, n.hot);
+      n.halo.material.color.copy(n.core.material.color);
+      n.core.scale.setScalar(1 + n.hot * 1.1);
+      n.halo.scale.setScalar(.55 + n.hot * .7);
+      n.halo.material.opacity = .4 + .12 * Math.sin(t * 1.5 + n.id) + n.hot * .4;
+    }
+    renderer.render(scene, camera);
+  })();
+})();
+
+/* Module 4: legal sections open from links and hash */
+const Legal = (() => {
+  const sync = () => {
+    const id = location.hash.slice(1);
+    const el = ['privacy', 'terms'].includes(id) && document.getElementById(id);
+    if (el) { el.open = true; el.scrollIntoView({behavior:'smooth', block:'start'}); }
+  };
+  addEventListener('hashchange', sync);
+  document.querySelectorAll('a[href="#privacy"],a[href="#terms"]').forEach(a => a.addEventListener('click', () => setTimeout(sync)));
+  sync();
+})();
+
+/* Module 3: enquiry form */
+const Enquiry = (() => {
+  // Paste your Google Apps Script Web app URL here (ends in /exec). Leave empty for demo mode.
+  const FORM_ENDPOINT = '';
+  const form = document.getElementById('enquiry'); if (!form) return;
+  const status = form.querySelector('.status'), btn = form.querySelector('button[type=submit]');
+  document.querySelectorAll('.portal[data-service]').forEach(c =>
+    c.addEventListener('click', () => { form.elements.service.value = c.dataset.service; }));
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (form.elements.company_site.value) return;
+    const data = Object.fromEntries(new FormData(form));
+    delete data.company_site; data.submitted_at = new Date().toISOString(); data.source = 'website';
+    status.className = 'status';
+    if (!FORM_ENDPOINT) {
+      status.textContent = 'Demo mode: add your form endpoint (FORM_ENDPOINT in the script) to start receiving enquiries.';
+      status.classList.add('warn'); return;
+    }
+    btn.disabled = true; status.textContent = 'Sending…';
+    try {
+      // No custom headers: text/plain avoids a CORS preflight, which Apps Script does not answer.
+      const r = await fetch(FORM_ENDPOINT, {method:'POST', body:JSON.stringify(data)});
+      const res = await r.json();
+      if (!res.ok) throw new Error(res.error || r.status);
+      form.reset(); status.textContent = 'Thanks, your enquiry is in. We’ll be in touch soon.'; status.classList.add('ok');
+    } catch (err) {
+      status.textContent = 'Something went wrong. Please try again.'; status.classList.add('warn');
+    }
+    btn.disabled = false;
+  });
+})();
+
+/* Module 2: portal card physics */
+const Portals = (() => {
+  const wrap = document.querySelector('.portals');
+  if (!wrap || reduce || !matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  addEventListener('pointermove', () => {
+    wrap.style.setProperty('--px', pointer.nx.toFixed(3));
+    wrap.style.setProperty('--py', pointer.ny.toFixed(3));
+  }, {passive:true});
+  wrap.querySelectorAll('.portal').forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      card.style.setProperty('--rx', (-y * 10).toFixed(2) + 'deg');
+      card.style.setProperty('--ry', (x * 12).toFixed(2) + 'deg');
+      card.style.setProperty('--gx', ((x + .5) * 100).toFixed(1) + '%');
+      card.style.setProperty('--gy', ((y + .5) * 100).toFixed(1) + '%');
+    });
+    card.addEventListener('pointerleave', () => {
+      card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg');
+    });
+  });
+})();
+})();
+</script>
+</body>
+</html>
